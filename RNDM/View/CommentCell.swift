@@ -7,6 +7,11 @@
 //
 
 import UIKit
+import Firebase
+
+protocol CommentCellDelegate {
+    func commentMenuTapped(comment: Comment)
+}
 
 class CommentCell: UITableViewCell {
 
@@ -14,8 +19,16 @@ class CommentCell: UITableViewCell {
     @IBOutlet weak var usernameTxt: UILabel!
     @IBOutlet weak var timestampTxt: UILabel!
     @IBOutlet weak var commentTxt: UILabel!
+    @IBOutlet weak var optionsMenu: UIImageView!
     
-    func configureCell(comment: Comment) {
+    // Variables
+    private var comment: Comment!
+    private var delegate: CommentCellDelegate?
+    
+    func configureCell(comment: Comment, delegate: CommentCellDelegate?) {
+        optionsMenu.isHidden = true
+        self.comment = comment
+        self.delegate = delegate
         usernameTxt.text = comment.username
         commentTxt.text = comment.commentTxt
         
@@ -23,6 +36,17 @@ class CommentCell: UITableViewCell {
         formatter.dateFormat = "MMM d, hh:mm"
         let timestamp = formatter.string(from: comment.timestamp)
         timestampTxt.text = timestamp
+        
+        if comment.userId == Auth.auth().currentUser?.uid {
+            optionsMenu.isHidden = false
+            optionsMenu.isUserInteractionEnabled = true
+            let tap = UITapGestureRecognizer(target: self, action: #selector(commentMenuTapped))
+            optionsMenu.addGestureRecognizer(tap)
+        }
+    }
+    
+    @objc func commentMenuTapped() {
+        delegate?.commentMenuTapped(comment: comment)
     }
 
 }
