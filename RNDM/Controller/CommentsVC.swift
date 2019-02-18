@@ -104,7 +104,7 @@ class CommentsVC: UIViewController, UITableViewDelegate, UITableViewDataSource, 
             self.performSegue(withIdentifier: TO_EDIT_COMMENTS, sender: (comment, self.thought))
         }
         
-        let cancelAction = UIAlertAction(title: "Cancel", style: .default, handler: nil)
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
         
         alert.addAction(deleteAction)
         alert.addAction(editAction)
