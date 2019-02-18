@@ -8,6 +8,8 @@
 
 import UIKit
 import Firebase
+import GoogleSignIn
+import FBSDKLoginKit
 
 enum ThoughtCategory : String {
     case serious = "serious"
@@ -29,6 +31,7 @@ class MainVC: UIViewController, UITableViewDelegate, UITableViewDataSource, Thou
     private var thoughtsListener: ListenerRegistration!
     private var selectedCategory = ThoughtCategory.funny.rawValue
     private var handle: AuthStateDidChangeListenerHandle?
+    var loginManager = FBSDKLoginManager()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -42,12 +45,14 @@ class MainVC: UIViewController, UITableViewDelegate, UITableViewDataSource, Thou
     
     override func viewWillAppear(_ animated: Bool) {
         handle = Auth.auth().addStateDidChangeListener({ (auth, user) in
+            
             if user == nil {
                 let storyboard = UIStoryboard(name: "Main", bundle: nil)
                 let loginVC = storyboard.instantiateViewController(withIdentifier: "loginVC")
                 self.present(loginVC, animated: true, completion: nil)
             } else {
                 self.setListener()
+                print("Welcome User: \(user?.uid.debugDescription)")
             }
         })
         
@@ -163,12 +168,31 @@ class MainVC: UIViewController, UITableViewDelegate, UITableViewDataSource, Thou
     }
     
     @IBAction func logoutPressed(_ sender: Any) {
+        guard let user = Auth.auth().currentUser else {return}
+        for info in (user.providerData) {
+            switch info.providerID {
+            case GoogleAuthProviderID:
+                signOutWithPassword()
+                print("Google User: \(user.uid)")
+            case TwitterAuthProviderID:
+                print("Twitter")
+            case FacebookAuthProviderID:
+                signOutWithPassword()
+                print("Facebook")
+            default:
+                signOutWithPassword()
+                break
+            }
+        }
+        
+    }
+    
+    func signOutWithPassword() {
         do {
             try Auth.auth().signOut()
         } catch let error as NSError {
             debugPrint("Error signing out \(error)")
         }
-        
     }
 
 

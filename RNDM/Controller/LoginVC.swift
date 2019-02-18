@@ -8,18 +8,28 @@
 
 import UIKit
 import Firebase
+import GoogleSignIn
+import FBSDKLoginKit
 
-class LoginVC: UIViewController {
+class LoginVC: UIViewController, GIDSignInUIDelegate, FBSDKLoginButtonDelegate {
+    
 
     // Outlets
     @IBOutlet weak var emailTxt: UITextField!
     @IBOutlet weak var passwordTxt: UITextField!
     @IBOutlet weak var loginBtn: UIButton!
     @IBOutlet weak var createUserBtn: UIButton!
+    @IBOutlet weak var facebookLoginButtton: FBSDKLoginButton!
+    
+    // Variables
+    var loginManager = FBSDKLoginManager()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setupView()
+        GIDSignIn.sharedInstance()?.uiDelegate = self
+        
+        facebookLoginButtton.delegate = self
     }
     
     func setupView() {
@@ -39,7 +49,48 @@ class LoginVC: UIViewController {
             }
         }
     }
-    @IBAction func createUserButtonPressed(_ sender: Any) {
+    // Facebook
+    func loginButton(_ loginButton: FBSDKLoginButton!, didCompleteWith result: FBSDKLoginManagerLoginResult!, error: Error!) {
+        if error != nil {
+            debugPrint("facebook login failed: \(error)")
+            return
+        }
+        
+        let credential = FacebookAuthProvider.credential(withAccessToken: result.token.tokenString)
+        firebaseLogin(credential)
+    }
+    
+    func loginButtonDidLogOut(_ loginButton: FBSDKLoginButton!) {
+        
+    }
+    @IBAction func customFaceBookTapped(_ sender: Any) {
+        loginManager.logIn(withReadPermissions: ["email"], from: self) { (result, error) in
+            if let error = error {
+                debugPrint("Could not login with facebook", error)
+            } else if result!.isCancelled {
+                print("Facebook login was cancelled")
+            } else {
+                let credential = FacebookAuthProvider.credential(withAccessToken: FBSDKAccessToken.current()!.tokenString)
+                self.firebaseLogin(credential)
+            }
+        }
+    }
+    
+    // Google
+    @IBAction func googleSignInTapped(_ sender: Any) {
+        GIDSignIn.sharedInstance()?.signIn()
+    }
+    
+    @IBAction func customGoogleSignIn(_ sender: Any) {
+        GIDSignIn.sharedInstance()?.signIn()
+    }
+    func firebaseLogin(_ credential: AuthCredential) {
+        Auth.auth().signInAndRetrieveData(with: credential) { (authResult, error) in
+            if let error = error {
+                debugPrint(error.localizedDescription)
+                return
+            } 
+        }
     }
     
 }
